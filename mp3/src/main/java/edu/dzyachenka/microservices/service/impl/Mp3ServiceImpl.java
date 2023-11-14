@@ -10,6 +10,7 @@ import edu.dzyachenka.microservices.model.dto.DeleteMp3ModelDto;
 import edu.dzyachenka.microservices.repository.Mp3Repository;
 import edu.dzyachenka.microservices.service.Mp3Service;
 import edu.dzyachenka.microservices.util.Mp3ModelIdGenerator;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,10 @@ import java.util.Objects;
 public class Mp3ServiceImpl implements Mp3Service {
 
     private static final String AUDIO_FORMAT = "audio/mpeg";
+    private static final String ROUTING_KEY = "resourceQueue";
+
+    @Autowired
+    private AmqpTemplate template;
     @Autowired
     private AmazonS3 amazonS3;
     @Autowired
@@ -41,7 +46,15 @@ public class Mp3ServiceImpl implements Mp3Service {
         final Integer mp3RecordId = Mp3ModelIdGenerator.generateMp3Id();
         final String fileName = file.getOriginalFilename();
         amazonS3.putObject(new PutObjectRequest(bucketName, mp3RecordId.toString(), file.getInputStream(), new ObjectMetadata()));
-        return mp3Repository.save(new Mp3Model(mp3RecordId, fileName));
+        final Mp3Model result = mp3Repository.save(new Mp3Model(mp3RecordId, fileName));
+
+        sendToRabbitMQ(result.getId());
+
+        return result;
+    }
+
+    private void sendToRabbitMQ(final Object message) {
+        template.convertAndSend(ROUTING_KEY, message);
     }
 
     @Override
