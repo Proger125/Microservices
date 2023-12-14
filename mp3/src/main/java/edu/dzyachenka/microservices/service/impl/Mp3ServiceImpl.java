@@ -9,10 +9,10 @@ import edu.dzyachenka.microservices.model.Mp3Model;
 import edu.dzyachenka.microservices.model.dto.DeleteMp3ModelDto;
 import edu.dzyachenka.microservices.repository.Mp3Repository;
 import edu.dzyachenka.microservices.service.Mp3Service;
-import edu.dzyachenka.microservices.util.Mp3ModelIdGenerator;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,6 +32,8 @@ public class Mp3ServiceImpl implements Mp3Service {
     @Autowired
     private AmqpTemplate template;
     @Autowired
+    private RetryTemplate retryTemplate;
+    @Autowired
     private AmazonS3 amazonS3;
     @Autowired
     private Mp3Repository mp3Repository;
@@ -43,18 +45,18 @@ public class Mp3ServiceImpl implements Mp3Service {
         if (!Objects.equals(file.getContentType(), AUDIO_FORMAT)) {
             throw new FormatNotSupportedException("Only audio/mpeg files are supported");
         }
-        final Integer mp3RecordId = Mp3ModelIdGenerator.generateMp3Id();
         final String fileName = file.getOriginalFilename();
-        amazonS3.putObject(new PutObjectRequest(bucketName, mp3RecordId.toString(), file.getInputStream(), new ObjectMetadata()));
-        final Mp3Model result = mp3Repository.save(new Mp3Model(mp3RecordId, fileName));
+        final Mp3Model result = mp3Repository.save(new Mp3Model(fileName));
+        amazonS3.putObject(new PutObjectRequest(bucketName, result.getId().toString(), file.getInputStream(), new ObjectMetadata()));
 
-        sendToRabbitMQ(result.getId());
+        retryTemplate.execute(ctx -> sendToRabbitMQ(result.getId()));
 
         return result;
     }
 
-    private void sendToRabbitMQ(final Object message) {
+    private boolean sendToRabbitMQ(final Object message) {
         template.convertAndSend(ROUTING_KEY, message);
+        return true;
     }
 
     @Override

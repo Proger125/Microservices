@@ -18,6 +18,8 @@ repositories {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-stream-rabbit', version: '4.0.4'
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.amqp:spring-rabbit-test'
 }

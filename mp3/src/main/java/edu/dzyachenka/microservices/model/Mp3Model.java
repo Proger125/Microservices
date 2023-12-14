@@ -6,17 +6,16 @@ import jakarta.persistence.*;
 @Table(name = "resources")
 public class Mp3Model {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     private String name;
 
     public Mp3Model() {
-        this.id = 0;
         this.name = "";
     }
 
-    public Mp3Model(final Integer id, final String name) {
-        this.id = id;
+    public Mp3Model(final String name) {
         this.name = name;
     }
 
