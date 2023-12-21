@@ -3,10 +3,12 @@ package edu.dzyachenka.microservices.controller;
 import edu.dzyachenka.microservices.model.Mp3Model;
 import edu.dzyachenka.microservices.model.dto.DeleteMp3ModelDto;
 import edu.dzyachenka.microservices.service.Mp3Service;
+import org.apache.tika.exception.TikaException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.util.List;
@@ -18,7 +20,7 @@ public class Mp3Controller {
     private Mp3Service mp3Service;
 
     @PostMapping(consumes = "multipart/form-data")
-    public ResponseEntity<Mp3Model> addRecord(@RequestBody MultipartFile file) throws IOException {
+    public ResponseEntity<Mp3Model> addRecord(@RequestBody MultipartFile file) throws IOException, TikaException, SAXException, InterruptedException {
         return new ResponseEntity<>(mp3Service.addRecord(file), HttpStatus.CREATED);
     }
 

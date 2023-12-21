@@ -6,18 +6,18 @@ import jakarta.persistence.*;
 @Table(name = "resources")
 public class Mp3Model {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-
     private String name;
+    private byte[] resource;
 
     public Mp3Model() {
-        this.id = 0;
         this.name = "";
     }
 
-    public Mp3Model(final Integer id, final String name) {
-        this.id = id;
+    public Mp3Model(final String name, final byte[] resource) {
         this.name = name;
+        this.resource = resource;
     }
 
     public void setId(final Integer id) {
@@ -34,5 +34,13 @@ public class Mp3Model {
 
     public String getName() {
         return this.name;
+    }
+
+    public byte[] getResource() {
+        return resource;
+    }
+
+    public void setResource(byte[] resource) {
+        this.resource = resource;
     }
 }
