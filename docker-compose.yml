@@ -1,6 +1,14 @@
 version: "3.9"
 services:
 
+  eureka:
+    container_name: eureka
+    image: eureka_image:latest
+    build:
+      context: .
+    ports:
+      - "8761:8761"
+
   mp3app:
     container_name: mp3app
     image: mp3_image:latest
@@ -10,8 +18,9 @@ services:
       - "8080:8080"
     depends_on:
       - mp3_db
-      - songapp
+      - eureka
     environment:
+      - eureka.client.serviceUrl.defaultZone=http://eureka:8761/eureka
       - SPRING_PROFILES_ACTIVE=dev
 
   mp3_db:
@@ -78,8 +87,10 @@ services:
       - "8081:8081"
     depends_on:
       - song_db
+      - eureka
     environment:
       - SPRING_PROFILES_ACTIVE=dev
+      - eureka.client.serviceUrl.defaultZone=http://eureka:8761/eureka
 
   song_db:
     container_name: song_db
